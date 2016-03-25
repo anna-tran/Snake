@@ -34,8 +34,49 @@ endSelect:
 	pop	{r4-r9,lr}
 	mov	pc,lr
 
+.globl	getDirection
 
+getDirection:
+	
+	push	{r4-r9,lr}	// push register values on stack
+	bl	Read_SNES	// read from SNES, r0 contains buttons stored
+	ldr	r4, =0xFFFFFFFF
+	eor	r0, r4
+	mov	r3, r0
 
+	mov	r0, #0		// default return value if no buttons pressed
+	mov	r1, #1		// r1 = 1
+
+	lsl	r2, r1, #12	// try up arrow
+	ands	r2, r3		// if up arrow
+
+	movne	r0, #11		// return up
+	bne	endDirec
+	
+	mov	r1, #1		// r1 = 1
+	lsl	r2, r1, #11	// try down arrow
+	ands	r2, r3		// if down arrow
+
+	movne	r0, #10		// return down
+	bne	endDirec
+
+	mov	r1, #1		// r1 = 1
+	lsl	r2, r1, #10	// try left
+	ands	r2, r3		// if left
+
+	movne	r0, #9		// return left
+	bne	endDirec
+	
+	mov	r1, #1		// r1 = 1
+	lsl	r2, r1, #9	// try right
+	ands	r2, r3		// if right
+
+	movne	r0, #8		// return right
+endDirec:
+	// r0 is our return value
+	pop	{r4-r9,lr}
+	mov	pc,lr
+	
 
 
 .globl init_GPIO

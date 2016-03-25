@@ -14,20 +14,63 @@ main:
 	bl	InitFrameBuffer
 	bl	init_menu
 	bl	mSelect
+	bl	gameLoop
 
+
+	b	haltLoop$
+
+end:
+	bl	drawMenuBck
+haltLoop$:
+	b	haltLoop$
+
+
+// Subroutine for game loop
+gameLoop:
+	push {r4-r9, lr}		//draw initail snake
 	ldr	r1, =snakeLen
 	ldr	r0, [r1]
 	ldr	r2, =direction
 	ldr	r1, [r2]
 	bl	drawSnake
 
-	b	haltLoop$
+stateLoop:
+	bl	getDirection		//get the direction the user wants the snake to go from the Snes
+	ldr	r1, =direction
+	ldr	r4, [r1]		//check that the direction pressed is not directly opposed to current
+	cmp	r4, #8
+	cmpeq	r0, #9
+	beq	notOposite
+	cmp	r4,#9
+	cmpeq	r0,#8
+	beq	notOposite
+	cmp	r4, #10
+	cmpeq	r0, #11
+	beq	notOposite
+	cmp	r4, #11
+	cmpeq	r0, #10
+	beq	notOposite
+	
+	cmp	r0, #0			// make sure somthing was pressed
+	strne	r0, [r1]		// update direction
+notOposite:
+	
+	ldr	r1, =snakeLen		// get length
+	ldr	r0, [r1]
 
+	
+	ldr	r2, =direction		// get direction
+	ldr	r1, [r2]
+	bl	updateSnake		// update snakes position
 
-end:
-	bl	drawMenuBck
-haltLoop$:
-	b	haltLoop$
+	ldr 	r3, =500000		//wait a bit
+	bl 	Wait
+	add	r9, #1
+	b 	stateLoop		// loop back
+	
+	pop {r4-r9, lr}	
+
+	mov	pc, lr
 
 
 // subroutine to initialize game map
@@ -105,11 +148,12 @@ wallY:	.hword 255
 	.hword 705
 
 .align 4
-score:	.int	23
+score:	.int	3
 lives:	.int	3
 
-snakeLen: .int	3
+snakeLen: .int	6
 // directions based on button number for up down left right
-direction: .int 9
+direction: .int 8
+
 
 

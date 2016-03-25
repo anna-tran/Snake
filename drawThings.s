@@ -265,7 +265,7 @@ eraseTileHorz:
 // r0 is length of Snake
 // r1 is direction of snake
 drawSnake:
-	push {r4-r9,lr}
+	push {r4-r10,lr}
 	mov	r9, r0		// r9 = length of snake
 	mov	r8, r1		// r8 = direction of snake
 	
@@ -277,6 +277,13 @@ drawSnake:
 	mov	r2, #4		// draw tail
 	mov	r3, #32
 	bl	drawTile
+
+	ldr	r3, =snakePosition	// store the x and y coor of Snake tail in order at end of array
+	lsl	r10, r9, #2
+	add	r3, r9
+	str	r0, [r3], #4		
+	str	r1, [r3]
+
 	sub	r9, #1		// discount tail
 	add	r4, #32		// just add to x for now
 
@@ -289,10 +296,16 @@ loopBody:
 	mov	r3, #32
 	bl	drawTile
 	
+	ldr	r3, =snakePosition	//store x and y coor of snake body in order at ofset r9*4
+	lsl	r10, r9, #2
+	add	r3, r9
+	str	r0, [r3], #4
+	str	r1, [r3]
+	
 	add	r4, #32		// go to next x
 	sub	r9, #1		// dec body length
 	cmp	r9, #1
-	bne	loopBody
+	bgt	loopBody
 
 	mov	r0, r4
 	mov	r1, r5
@@ -304,10 +317,91 @@ loopBody:
 	mov	r3, #32
 	bl	drawTile
 
-	pop {r4-r9,lr}
+	ldr	r3, =snakePosition	//Store Head x and y coor at start of array
+	lsl	r10, r9, #2
+	add	r3, r9
+	str	r0, [r3], #4
+	str	r1, [r3]
+
+	pop {r4-r10,lr}
 	mov	pc,lr
 
 
+.globl updateSnake
+// r0 is length of snake
+// r1 is directon of snake
+
+updateSnake:
+	push {r4-r9, lr}
+	mov	r9, r0		//get length
+	mov	r8, r1		//get direction
+	ldr	r4, =snakePosition
+	ldr	r5, =snakePosition
+	ldr	r0, [r4], #4
+	ldr	r1, [r4], #4
+	mov	r6, r0		//copy x location
+	mov	r7, r1		// copy y location
+
+
+	cmp	r8, #8		//move right
+	moveq	r2, #2
+	addeq	r0, #32
+
+	cmp	r8, #9		//move left
+	moveq	r2, #-2
+	subeq	r0, #32	
+
+	cmp	r8, #10		//move down
+	moveq	r2, #2
+	addeq	r1, #32
+
+	cmp	r8, #11		//move up
+	moveq	r2, #2
+	subeq	r1, #32	
+	mov	r3, #32
+	
+	bl	drawTile	// draw head
+	str	r0, [r5], #4
+	str	r1, [r5], #4
+	sub	r9, #1
+reDrawBody:
+	mov	r0, r6
+	mov	r1, r7
+	
+	mov	r2, #3
+	mov	r3, #32		//draw body piece
+	bl	drawTile
+	ldr	r6, [r4],#4
+	ldr	r7, [r4],#4
+	str	r0,[r5],#4
+	str	r1,[r5],#4
+
+	sub	r9, #1		// dec body length
+	cmp	r9, #1
+
+
+
+	bne	reDrawBody
+	mov	r0, r6
+	mov	r1,r7
+	mov	r2, #4		// draw tail
+	mov	r3, #32
+	bl	drawTile
+	
+	ldr	r6, [r4],#4
+	ldr	r7, [r4],#4
+	str	r0,[r5],#4
+	str	r1,[r5],#4
+
+	mov	r0, r6
+	mov	r1,r7
+	ldr	r2, =0xA098		//erase previous tail
+	mov	r3, #32
+	bl	eraseTile
+	
+
+	pop {r4-r9, lr}
+	mov	pc, lr
 
 .globl	drawTile
 // r0 is the x top left corner
@@ -315,7 +409,7 @@ loopBody:
 // r2 int representing tile image to be displayed
 // r3 size of tile
 drawTile:
-	push {r4, r5, r6, r7, r8, r9, lr}
+	push {r4, r5, r6, r7, r8, r9, r10, lr}
 // 0 - Brick
 // 1 - Wall
 // 2 - Snake headR
@@ -325,6 +419,7 @@ drawTile:
 // 5 - Apple
 // 6 - Door
 // 7 - Pointer
+
 	cmp	r2, #0
 	ldreq	r5, =Brick
 
@@ -347,6 +442,8 @@ drawTile:
 	ldreq	r5, =Duck
 
 
+
+
 // r6 is a copy of r0
 // r7 is a copy of r1
 	mov	r6, r0		
@@ -364,6 +461,8 @@ drawTileVert:
 
 drawTileHorz:	
 	ldrh		r2, [r5], #2	// get pixel color
+
+
 	bl		DrawPixel
 	add		r0, r3, #1	// x = x+1
 	add		r3, r3, #1	// inc x counter
@@ -375,7 +474,10 @@ drawTileHorz:
 	cmp		r4, r9		// if < 32px down
 	blt		drawTileVert	// loop back
 
-	pop {r4, r5, r6, r7, r8, r9, lr}
+
+	mov		r0, r6		//return location of the tile
+	mov		r1, r7
+	pop {r4, r5, r6, r7, r8, r9, r10, lr}
 	mov	pc, lr
 		
 
@@ -415,6 +517,9 @@ DrawPixel:
 font:		.incbin	"font.bin"
 
 .align 2
+snakePosition:
+	.int 0
+
 HeadL:.ascii "x\240\331\210\231\240\30\250\231\240\231\240W\220\270\230X\230"
 .ascii "\230\250\226\240\232\240\230\220\267\240Y\260\267\230\257\264"
 .ascii "\343\201\305b\305Y\230\230\270\230\226\240\231\220y\250\231\220"
