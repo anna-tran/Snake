@@ -38,10 +38,6 @@ loopBricks:
 	subs	r5, #1
 	bne	loopBricks	// if not that brick, check again
 
-
-	
-
-
 alive:
 	mov	r0, r8		// if not dead then return original x
 	b	returnDead
@@ -53,9 +49,81 @@ returnDead:
 	pop {r4-r9,lr}
 	mov	pc,lr
 
+.globl	checkApple
+// r0 is x
+// r1 is y
+
+// get apple coordinates i.e. rand coordinates
+// to be completed
+checkApple:
+
+	push	{r4-r9,lr}
+	ldr	r4, =rand
+	ldm	r4, {r5,r6}
+
+	pop	{r4-r9,lr}
+	mov	pc,lr
+
+.globl getRand
+// r0 = 0 if x
+//    = 1 if y
+// returns rand x in r0
+// returns rand y in r1
+getRand:
+	push	{r4-r9,lr}
+
+	ldr	r4, =rand
+	ldm	r4, {r0,r1}
+
+	mov	r5, r0		// copy x
+	mov	r6, r1		// copy y
+
+	// xorshift x
+redoX:
+	lsl	r2, r0, #4	// x ^ 4
+	eor	r5, r2
+	lsr	r2, r0, #3	// x ^ 3
+	eor	r5, r2
+	eor	r5, r0
+
+	ldr	r2, =0xFFF	// at min 64
+	and	r5, r2		// at most 896
+	cmp	r5, #64
+	blt	redoX
+	cmp	r5, #928
+	bgt	redoX
+
+	// xorshift y
+redoY:
+	lsl	r2, r1, #4	// x ^ 4
+	eor	r6, r2
+	lsr	r2, r1, #3	// x ^ 3
+	eor	r6, r2
+	eor	r6, r1
+
+	ldr	r2, =0xFFF	// at min 256
+	and	r6, r2		// at most 672
+
+	cmp	r5, #256
+	blt	redoY
+	cmp	r5, #672
+	bgt	redoY
+
+
+	stm	r4, {r5,r6}
+
+	pop	{r4-r9,lr}
+	mov	pc,lr
+
+
+
 .section .data
 
 .align 4
+rand:
+	.int 640
+	.int 608
+
 bricks:
 	.hword 384, 352, 384, 384, 384, 416, 384, 448, 384, 480
 	.hword 192, 608, 256, 608, 320, 608, 384, 608, 448, 608, 512, 608, 576, 608

@@ -33,6 +33,7 @@ gameLoop:
 	ldr	r2, =direction
 	ldr	r1, [r2]
 	bl	drawSnake
+	bl	drawApple
 
 stateLoop:
 	bl	getDirection		//get the direction the user wants the snake to go from the Snes
@@ -73,7 +74,7 @@ notOposite:
 	cmp	r1, #0
 	beq	finish
 	bl	init_map		// remake map
-	ldr 	r3, =500000		//wait a bit
+	ldr 	r3, =50000000		//wait a bit
 	bl 	Wait
 
 	b	gameLoop		// loop again
