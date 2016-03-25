@@ -27,7 +27,7 @@ haltLoop$:
 
 // Subroutine for game loop
 gameLoop:
-	push {r4-r9, lr}		//draw initail snake
+	push {r4-r9, lr}		//draw initial snake
 	ldr	r1, =snakeLen
 	ldr	r0, [r1]
 	ldr	r2, =direction
@@ -64,8 +64,21 @@ notOposite:
 	bl	updateSnake		// update snakes position
 
 	cmp	r0, #-1			// r0 contains dead (-1) if dead
+	bne	wait
+	
+	ldr	r0, =lives
+	ldr	r1, [r0]
+	sub	r1, #1			// decrease # lives
+	str	r1, [r0]
+	cmp	r1, #0
 	beq	finish
+	bl	init_map		// remake map
+	ldr 	r3, =500000		//wait a bit
+	bl 	Wait
 
+	b	gameLoop		// loop again
+	
+wait:
 	ldr 	r3, =500000		//wait a bit
 	bl 	Wait
 	add	r9, #1
@@ -74,6 +87,8 @@ finish:
 	pop {r4-r9, lr}	
 
 	mov	pc, lr
+
+// subroutine
 
 
 // subroutine to initialize game map
@@ -143,6 +158,7 @@ mSelect2:
 FrameBufferPointer:
 	.int 0
 	
+
 
 
 .align 4
