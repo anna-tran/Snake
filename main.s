@@ -63,11 +63,14 @@ notOposite:
 	ldr	r1, [r2]
 	bl	updateSnake		// update snakes position
 
+	cmp	r0, #-1			// r0 contains dead (-1) if dead
+	beq	finish
+
 	ldr 	r3, =500000		//wait a bit
 	bl 	Wait
 	add	r9, #1
 	b 	stateLoop		// loop back
-	
+finish:	
 	pop {r4-r9, lr}	
 
 	mov	pc, lr
@@ -140,12 +143,7 @@ mSelect2:
 FrameBufferPointer:
 	.int 0
 	
-// all num are 1 less than their actual bound
-// if snake destined to go further than the bound it dies
-wallX:	.hword 63
-	.hword 960
-wallY:	.hword 255
-	.hword 705
+
 
 .align 4
 score:	.int	3

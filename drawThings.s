@@ -279,8 +279,8 @@ drawSnake:
 	bl	drawTile
 
 	ldr	r3, =snakePosition	// store the x and y coor of Snake tail in order at end of array
-	lsl	r10, r9, #2
-	add	r3, r9
+//	lsl	r10, r9, #2		// r10 = length of snake * 4
+//	add	r3, r10
 	str	r0, [r3], #4		
 	str	r1, [r3]
 
@@ -297,8 +297,8 @@ loopBody:
 	bl	drawTile
 	
 	ldr	r3, =snakePosition	//store x and y coor of snake body in order at ofset r9*4
-	lsl	r10, r9, #2
-	add	r3, r9
+//	lsl	r10, r9, #2
+//	add	r3, r9
 	str	r0, [r3], #4
 	str	r1, [r3]
 	
@@ -357,7 +357,12 @@ updateSnake:
 
 	cmp	r8, #11		//move up
 	moveq	r2, #2
-	subeq	r1, #32	
+	subeq	r1, #32
+
+	bl	checkDeath	// check if snake has died
+	cmp	r0, #-1
+	beq	returnUpdate	// if dead, return
+
 	mov	r3, #32
 	
 	bl	drawTile	// draw head
@@ -365,8 +370,8 @@ updateSnake:
 	str	r1, [r5], #4
 	sub	r9, #1
 reDrawBody:
-	mov	r0, r6
-	mov	r1, r7
+	mov	r0, r6		// x
+	mov	r1, r7		// y
 	
 	mov	r2, #3
 	mov	r3, #32		//draw body piece
@@ -399,7 +404,7 @@ reDrawBody:
 	mov	r3, #32
 	bl	eraseTile
 	
-
+returnUpdate:
 	pop {r4-r9, lr}
 	mov	pc, lr
 
@@ -518,6 +523,7 @@ font:		.incbin	"font.bin"
 
 .align 2
 snakePosition:
+	.int 0
 	.int 0
 
 HeadL:.ascii "x\240\331\210\231\240\30\250\231\240\231\240W\220\270\230X\230"

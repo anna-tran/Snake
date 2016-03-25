@@ -12,21 +12,21 @@ selectMenu:
 
 	lsl	r2, r1, #12	// try up arrow
 	ands	r2, r3		// if up arrow
-break1:
+
 	movne	r0, #11		// return up
 	bne	endSelect
 	
 	mov	r1, #1		// r1 = 1
 	lsl	r2, r1, #11	// try down arrow
 	ands	r2, r3		// if down arrow
-break2:
+
 	movne	r0, #10		// return down
 	bne	endSelect
 
 	mov	r1, #1		// r1 = 1
 	lsl	r2, r1, #8	// try A
 	ands	r2, r3		// if A
-break3:
+
 	movne	r0, #7		// return A
 
 endSelect:
@@ -213,7 +213,7 @@ pulseLoop:
 	add	r6, #1		//increment i
 	cmp	r6, r7		//check if i is max
 	blt	pulseLoop	// if not loop back
-break4:	
+	
 	mov	r0, r5		//puts r5 into r0 to be returned
 	pop	{r5, r6, r7, r8, lr}	// pop off register values from stack
 
