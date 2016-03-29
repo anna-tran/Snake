@@ -28,6 +28,19 @@ haltLoop$:
 // Subroutine for game loop
 gameLoop:
 	push {r4-r9, lr}		//draw initial snake
+
+	ldr 	r3, =200000		//wait a bit
+	bl 	Wait
+
+	bl	clearSL
+
+	ldr	r0, =score
+	ldr	r0, [r0]
+	ldr	r1, =lives
+	ldr	r1, [r1]
+	bl	printSL
+
+
 	ldr	r1, =snakeLen
 	ldr	r0, [r1]
 	ldr	r2, =direction
@@ -62,34 +75,43 @@ notOposite:
 	
 	ldr	r2, =direction		// get direction
 	ldr	r1, [r2]
-	bl	updateSnake		// update snakes position
+breakb:	bl	updateSnake		// update snakes position
 
 	cmp	r0, #-1			// r0 contains dead (-1) if dead
 	bne	wait
+	bl	resetSnake
+	
 	
 	ldr	r0, =lives
 	ldr	r1, [r0]
 	sub	r1, #1			// decrease # lives
 	str	r1, [r0]
 	cmp	r1, #0
-	beq	finish
-	bl	init_map		// remake map
-	ldr 	r3, =50000000		//wait a bit
-	bl 	Wait
-
-	b	gameLoop		// loop again
+//	bleq	drawLose
+breaka:	ble	finish
+	b	gameLoop		//restart game loop
 	
 wait:
-	ldr 	r3, =500000		//wait a bit
+	ldr 	r3, =100000		//wait a bit
 	bl 	Wait
-	add	r9, #1
+
+//	add	r9, #1
 	b 	stateLoop		// loop back
 finish:	
 	pop {r4-r9, lr}	
 
 	mov	pc, lr
 
-// subroutine
+// subroutine to reset snake
+resetSnake:
+	push	{r4-r9,lr}
+
+	mov	r0, #8
+	ldr	r1, =direction
+	str	r0, [r1]
+
+	pop	{r4-r9,lr}
+	mov	pc,lr
 
 
 // subroutine to initialize game map
@@ -98,12 +120,13 @@ init_map:
 	bl	drawGameBck
 	bl	drawWall
 	bl	putTiles
-
+/*
 	ldr	r0, =score
 	ldr	r0, [r0]
 	ldr	r1, =lives
 	ldr	r1, [r1]
 	bl	printSL
+*/
 	pop {lr}
 	mov	pc,lr
 
@@ -166,6 +189,7 @@ FrameBufferPointer:
 score:	.int	3
 lives:	.int	3
 
+.globl	snakeLen
 snakeLen: .int	6
 // directions based on button number for up down left right
 direction: .int 8

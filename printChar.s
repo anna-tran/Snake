@@ -88,7 +88,6 @@ getLives:
 	mov	pc,lr
 
 
-
 // subroutine to convert integer to ascii
 // r0 is value
 itoa:	
