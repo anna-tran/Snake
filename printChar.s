@@ -10,6 +10,7 @@ r1 = lives
 printSL:
 	push {r4-r9, lr}
 // start at 320
+
 	px	.req r1
 	py	.req r2
 	count	.req r8

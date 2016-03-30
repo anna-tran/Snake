@@ -1,7 +1,20 @@
 .section .data
 
 
-.align 2
+.globl	applePosition
+applePosition:
+	.int 640
+	.int 640
+
+.globl HeadDest
+HeadDest:
+	.int 0
+	.int 0
+
+.globl HeadDir
+HeadDir:
+	.int 0
+
 .globl snakePosition
 snakePosition:
 	.rept	256

@@ -9,7 +9,7 @@ checkDeath:
 	
 	mov	r8, r0		// copy x
 	mov	r9, r1		// copy y
-	
+loopWalls:	
 	ldr	r4, =wall
 	ldr	r5, [r4], #4	// wall left
 	ldr	r6, [r4], #4	// wall right
@@ -26,7 +26,7 @@ checkDeath:
 
 	// check bricks
 	ldr	r4, =bricks	// x
-	mov	r5, #19
+	mov	r7, #20
 	
 loopBricks:
 	ldr	r5, [r4], #4	// check x
@@ -35,8 +35,24 @@ loopBricks:
 	cmpeq	r9, r6
 	beq	dead		// if a brick, dead
 
-	subs	r5, #1
+	subs	r7, #1
 	bne	loopBricks	// if not that brick, check again
+
+
+	ldr	r4, =snakePosition
+	add	r4, #8		// start after head
+	ldr	r5, =snakeLen
+	ldr	r7, [r5] 
+
+loopBody:
+	ldr	r5, [r4], #4	// check x
+	ldr	r6, [r4], #4	// check y
+	cmp	r8, r5		// cmp x and y
+	cmpeq	r9, r6
+	beq	dead		// if part of snake, dead
+
+	subs	r7, #1
+	bne	loopBody
 
 alive:
 	mov	r0, r8		// if not dead then return original x
@@ -49,56 +65,76 @@ returnDead:
 	pop {r4-r9,lr}
 	mov	pc,lr
 
-.globl	checkApple
+.globl checkApple
+// r0 is x
+// r1 is y
+checkApple:
+	push	{r4-r9,lr}
+
+	ldr	r4, =applePosition
+	ldr	r5, [r4], #4	// get apple x
+	ldr	r6, [r4]	// get apple y
+printApplePos:
+	cmp	r0, r5
+	cmpeq	r1, r6
+	moveq	r0, #0		// r0 = 0 if going to apple position
+	
+
+	pop	{r4-r9,lr}
+	mov	pc,lr
+
+
+
+.globl	correctApple
 // get apple coordinates i.e. rand coordinates
 // to be completed
-checkApple:
+correctApple:
 
 	push	{r4-r9,lr}
 	ldr	r4, =applePosition
-	ldm	r4, {r0,r1}	// r0 = x
-				// r1 = y
+	ldm	r4, {r8,r9}	// r8 = x
+				// r9 = y
 
-	ldr	r2, =bricks
+	ldr	r7, =bricks
 	mov	r3, #19
 checkAppleBrick:
 
-	ldr	r5, [r2], #4	// check x
-	ldr	r6, [r2], #4	// check y
-	cmp	r0, r5		// cmp x and y
-	cmpeq	r1, r6
-	moveq	r0, #-1
+	ldr	r5, [r7], #4	// check x
+	ldr	r6, [r7], #4	// check y
+	cmp	r8, r5		// cmp x and y
+	cmpeq	r9, r6
+	moveq	r8, #-1
 	beq	callRedo	// if a brick, try again
 
 	subs	r3, #1
 	bne	checkAppleBrick	// if not that brick, check again
 
 
-	ldr	r2, =snakePosition
+	ldr	r7, =snakePosition
 	ldr	r4, =snakeLen
 	ldr	r3, [r4]	// counter for loop
 
 checkAppleSnake:
-	ldr	r5, [r2], #4	// check x
-	ldr	r6, [r2], #4	// check y
-	cmp	r0, r5		// cmp x and y
-	cmpeq	r1, r6
-	moveq	r0, #-1
+	ldr	r5, [r7], #4	// check x
+	ldr	r6, [r7], #4	// check y
+	cmp	r8, r5		// cmp x and y
+	cmpeq	r9, r6
+	moveq	r8, #-1
 	beq	callRedo	// if a snake body piece, try again
 
 	subs	r3, #1
 	bne	checkAppleSnake	// if not that brick, check again
 
-	mov	r0, #0
+	b endAppleCheck
 callRedo:
+	mov	r0, #0
 // 0 if ok
 // -1 if redo
+endAppleCheck:
 	pop	{r4-r9,lr}
 	mov	pc,lr
 
 .globl getRand
-// returns rand x in r0
-// returns rand y in r1
 getRand:
 	push	{r4-r9,lr}
 randAgain:
@@ -110,13 +146,13 @@ randAgain:
 
 	// xorshift x
 redoX:
-	lsl	r2, r0, #4	// x ^ 4
-	eor	r5, r2
-	lsr	r2, r0, #2	// x ^ 3
-	eor	r5, r2
+	lsr	r2, r0, #2	// x ^ 4
+	eor	r5, r5, r2
+	lsl	r2, r0, #1
+	eor	r5, r5, r2
 	eor	r5, r0
-
-	ldr	r2, =0x3C0	// at min 64
+tryredox:
+	ldr	r2, =0x3E0	// at min 64
 	and	r5, r2		// at most 896
 	cmp	r5, #64
 	blt	redoX
@@ -125,40 +161,48 @@ redoX:
 
 	// xorshift y
 redoY:
-	lsl	r2, r1, #4	// x ^ 4
+	lsr	r2, r1, #2	// x ^ 4
 	eor	r6, r2
-	lsr	r2, r1, #2	// x ^ 3
+	lsl	r2, r1, #1
 	eor	r6, r2
 	eor	r6, r1
-
-	ldr	r2, =0x3B0	// at min 256
+tryredoy:
+	ldr	r2, =0x3C0	// at min 256
 	and	r6, r2		// at most 672
 
-	cmp	r5, #256
+	cmp	r6, #256
 	blt	redoY
-	cmp	r5, #672
+	cmp	r6, #672
 	bgt	redoY
 
+	ldr	r4, =applePosition
 	stm	r4, {r5,r6}	// update apple position
 
-	bl	checkApple
-	cmp	r0, #0
-	bne	randAgain	// if apple in spot of snake or brick,
+//	bl	correctApple
+//	cmp	r0, #0
+//	bne	randAgain	// if apple in spot of snake or brick,
 				// try again
 
 	pop	{r4-r9,lr}
 	mov	pc,lr
 
 
+.globl	incLength
+// subroutine to increase snake length by 1
+incLength:
+	push	{r4-r9,lr}
+
+	ldr	r4, =snakeLen
+	ldr	r5, [r4]
+	add	r5, #1
+	str	r5, [r4]
+
+	pop	{r4-r9,lr}
+	mov	pc,lr
 
 .section .data
 
 .align 4
-.globl	applePosition
-applePosition:
-	.int 640
-	.int 608
-
 
 bricks:
 	.int 384, 352, 384, 384, 384, 416, 384, 448, 384, 480

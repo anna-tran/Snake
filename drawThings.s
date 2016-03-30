@@ -362,6 +362,13 @@ updateSnake:
 	moveq	r2, #2
 	subeq	r1, #32
 
+	ldr	r3, =HeadDest	// save head destination
+	str	r0, [r3], #4
+	str	r1, [r3]
+
+	ldr	r3, =HeadDir	// save head direction
+	str	r2, [r3]
+
 	bl	checkDeath	// check if snake has died
 	cmp	r0, #-1
 	moveq	r1, r9		// get snake length
@@ -369,11 +376,31 @@ updateSnake:
 	moveq	r0, #-1		// move -1 back into r0
 	beq	returnUpdate	// if dead, return
 
+
+	ldr	r3, =HeadDest	// load head destination
+	ldr	r0, [r3], #4
+	ldr	r1, [r3]
+
+	bl	checkApple
+	cmp	r0, #0		// if apple, then 0
+	bne	drawUsual
+	bl	getRand
+adraw:	bl	drawApple
+	bl	incLength
+drawUsual:
+	ldr	r3, =HeadDest	// load head destination
+	ldr	r0, [r3], #4
+	ldr	r1, [r3]
+	
 	mov	r3, #32
 	
 	bl	drawTile	// redraw head
 	str	r0, [r5], #4
 	str	r1, [r5], #4
+
+
+	ldr	r3, =snakeLen
+	ldr	r9, [r3]
 	sub	r9, #1
 reDrawBody:
 	mov	r0, r6		// x
@@ -446,10 +473,14 @@ drawApple:
 
 	push	{r4-r9,lr}
 
-	bl	getRand
+	
+	ldr	r4, =applePosition
+	ldr	r0, [r4], #4
+	ldr	r1, [r4]
 	mov	r2, #5
 	mov	r3, #32
 	bl	drawTile
+
 
 	pop	{r4-r9,lr}
 	mov	pc,lr

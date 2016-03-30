@@ -186,11 +186,11 @@ FrameBufferPointer:
 
 
 .align 4
-score:	.int	3
+score:	.int	0
 lives:	.int	3
 
 .globl	snakeLen
-snakeLen: .int	6
+snakeLen: .int	3
 // directions based on button number for up down left right
 direction: .int 8
 
