@@ -392,6 +392,9 @@ drawUsual:
 	ldr	r0, [r3], #4
 	ldr	r1, [r3]
 	
+	ldr	r2, =HeadDir	// save head direction
+	ldr	r2, [r2]
+	
 	mov	r3, #32
 	
 	bl	drawTile	// redraw head
