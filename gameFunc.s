@@ -92,18 +92,19 @@ correctApple:
 
 	push	{r4-r9,lr}
 	ldr	r4, =applePosition
-	ldm	r4, {r8,r9}	// r8 = x
+	ldr	r8, [r4], #4
+	ldr	r9, [r4]
+//	ldm	r4, {r8,r9}	// r8 = x
 				// r9 = y
 
 	ldr	r7, =bricks
-	mov	r3, #19
+	mov	r3, #20
 checkAppleBrick:
 
 	ldr	r5, [r7], #4	// check x
 	ldr	r6, [r7], #4	// check y
 	cmp	r8, r5		// cmp x and y
 	cmpeq	r9, r6
-	moveq	r8, #-1
 	beq	callRedo	// if a brick, try again
 
 	subs	r3, #1
@@ -119,7 +120,6 @@ checkAppleSnake:
 	ldr	r6, [r7], #4	// check y
 	cmp	r8, r5		// cmp x and y
 	cmpeq	r9, r6
-	moveq	r8, #-1
 	beq	callRedo	// if a snake body piece, try again
 
 	subs	r3, #1
@@ -146,9 +146,9 @@ randAgain:
 
 	// xorshift x
 redoX:
-	lsr	r2, r0, #2	// x ^ 4
+	lsr	r2, r0, #3	// x ^ 4
 	eor	r5, r5, r2
-	lsl	r2, r0, #1
+	lsl	r2, r0, #2
 	eor	r5, r5, r2
 	eor	r5, r0
 tryredox:
@@ -161,9 +161,9 @@ tryredox:
 
 	// xorshift y
 redoY:
-	lsr	r2, r1, #2	// x ^ 4
-	eor	r6, r2
 	lsl	r2, r1, #1
+	eor	r6, r2
+	lsr	r2, r1, #2	// x ^ 4
 	eor	r6, r2
 	eor	r6, r1
 tryredoy:
@@ -178,9 +178,9 @@ tryredoy:
 	ldr	r4, =applePosition
 	stm	r4, {r5,r6}	// update apple position
 
-//	bl	correctApple
-//	cmp	r0, #0
-//	bne	randAgain	// if apple in spot of snake or brick,
+	bl	correctApple
+	cmp	r0, #0
+	beq	randAgain	// if apple in spot of snake or brick,
 				// try again
 
 	pop	{r4-r9,lr}

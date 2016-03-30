@@ -31,7 +31,7 @@ loopScore:
 	add	px, r3, #8
 	mov	r3, px
 	subs	count, #1	// dec counter
-	bgt	loopScore
+	bge	loopScore
 
 // add 48 to score digits and lives to get ascii
 // cap of at 99 for score
@@ -52,7 +52,7 @@ getScore:
 	add	px, r3, #8
 	mov	r3, px
 	subs	count, #1	// dec counter
-	bgt	getScore
+	bge	getScore
 
 
 	ldr	px, =512	// init x coor

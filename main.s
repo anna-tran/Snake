@@ -186,7 +186,7 @@ FrameBufferPointer:
 
 
 .align 4
-score:	.int	0
+score:	.int	12
 lives:	.int	3
 
 .globl	snakeLen
