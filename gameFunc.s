@@ -139,22 +139,28 @@ getRand:
 	push	{r4-r9,lr}
 	
 	// xorshift x
+	
+	mov	r0, #0		// start with x
+
+randAgain:
 	ldr	r4, =rand
 	ldm	r4, {r5-r8}	// r5 - r8 contain the random integers
-	mov	r0, #0		// start with x
-	ldr	r4, =applePosition
-randAgain:
-	eor	r2, r5, lsl #9	// r2 ^= r5 << 9
-	eor	r2, r2, lsr #6	// r2 ^= r2 >> 6
+	eor	r2, r5, lsl #11	// r2 ^= r5 << 11
+	eor	r2, r2, lsr #9	// r2 ^= r2 >> 9
 	mov	r5, r6		// move the random integers down by one
 	mov	r6, r7
 	mov	r7, r8
-	eor	r8, r8, lsr #3	// r8 ^= r8 >> 3
+	eor	r8, r8, lsr #16	// r8 ^= r8 >> 16
 	eor	r8, r2		// r8 ^= r2
+
+	ldr	r4, =rand	// store these new random numbers
+	stm	r4, {r5-r8}
+
+	// r8 is our random number
 	
 	lsl	r8, #5		// lsl by 5 to 32-bit align
-	ldr	r2, =3FF	// r2 is 0011 1111 1111
-	and	r8, r2
+	ldr	r2, =0x3FF	// r2 is 0011 1111 1111
+	and	r8, r2		// get max number of 10 bits
 	cmp	r0, #0
 	bne	checkAppleY
 	
@@ -163,6 +169,7 @@ checkAppleX:
 	blt	randAgain
 	cmp	r8, #928
 	bgt	randAgain
+	ldr	r4, =applePosition	// apple x
 	b	storeAppleXY
 	
 checkAppleY:
@@ -170,10 +177,13 @@ checkAppleY:
 	cmp	r8, #256
 	blt	randAgain
 	cmp	r8, #672
+	ldr	r4, =applePosition	// apple y
+	add	r4, #4
 	bgt	randAgain
 
 storeAppleXY:	
-	str	r8, [r4], #4	// store new x position for apple
+
+	str	r8, [r4]	// store new x position for apple
 	add	r0, #1		// change to y
 	cmp	r0, #1
 	beq	randAgain	// generate another random value for y
@@ -207,7 +217,7 @@ incLength:
 
 .align 4
 rand:
-	.int 32, 128, 300, 288
+	.int 35290, 103666, 3009, 6123
 
 bricks:
 	.int 384, 352, 384, 384, 384, 416, 384, 448, 384, 480

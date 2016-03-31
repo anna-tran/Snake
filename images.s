@@ -4,7 +4,7 @@
 .globl	applePosition
 applePosition:
 	.int 640
-	.int 640
+	.int 608
 
 .globl HeadDest
 HeadDest:

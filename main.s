@@ -92,7 +92,7 @@ breaka:	ble	finish
 	b	gameLoop		//restart game loop
 	
 wait:
-	ldr 	r3, =100000		//wait a bit
+	ldr 	r3, =120000//100000		//wait a bit
 	bl 	Wait
 
 //	add	r9, #1
