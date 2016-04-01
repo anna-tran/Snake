@@ -49,6 +49,8 @@ haltLoop$:
 gameLoop:
 	push {r4-r9, lr}		//draw initial snake
 
+restartGameIteration:
+
 	ldr 	r3, =200000		//wait a bit
 	bl 	Wait
 
@@ -93,10 +95,9 @@ stateLoop:
 	cmpeq	r0, #10
 	beq	notOposite
 
-//	cmp	r0, #12			// check if start button, r0 is return value
-//	mov	r0, #0
-//	b	continueGameLoop
-/*	bl	pauseMenu
+	cmp	r0, #12			// check if start button, r0 is return value
+	bne	continueGameLoop	// if not start button, check if anything was pressed
+	bleq	pauseMenu
 // 0 - restart
 // 1 - quit
 // 2 - resume
@@ -107,15 +108,15 @@ isPause:
 	ldreq	r2, =endGame
 	moveq	r3, #0
 	streq	r3, [r2]
-	beq	gameLoop
+	beq	restartGameIteration
 shouldQuit:
 	cmp	r1, #1
 	ldreq	r2, =endGame
 	moveq	r3, #2
 	streq	r3, [r2]		// store quit value in endGame
-	beq	finish			// if r1 = 2, resume game as normal
+	beq	finish			// if r1 = 2, resume game as normal.
 	mov	r0, #0
-*/
+
 
 continueGameLoop:	
 	cmp	r0, #0			// make sure somthing was pressed
@@ -142,18 +143,24 @@ notOposite:
 	str	r1, [r0]
 	cmp	r1, #0
 isLose:
+	ldreq	r0, =endGame
+	moveq	r9, #3
+	streq	r9, [r0]
 	mov	r0, #3
+	
 	bleq	drawWLP
 	ble	finish
-	b	gameLoop		//restart game loop
+	b	restartGameIteration		//restart game loop
 	
 wait:
 	ldr	r0, =endGame		// check if game is won
 	ldr	r9, [r0]
 	cmp	r9, #1
+	bne	nextTurn		// if not 1, then game is not yet won
 isWin:	moveq	r0, #1
 	bleq	drawWLP			// draw win message
 	beq	finish			// finish game
+nextTurn:
 	ldr 	r3, =120000//100000		//wait a bit
 	bl 	Wait
 
