@@ -1,57 +1,42 @@
-.section    .init
-.globl     _start
 
-_start:
-    b       main
-    
 .section .text
-
-main:
-    bl		InstallIntTable			// *** MUST COME FIRST, sets the stack pointer
+.globl	interruptSetUp
+interruptSetUp:
 	
-	bl		EnableJTAG
+    	
 
-	bl		InitLED					// initialize the LED (pin 16 to output)
-	bl		InitSNES				// initialize the SNES controller
-
-	mov		r0, #1
-	bl		SetLATLevel				// set the Latch line high, so the B button changes the Data line
-
-// don't need?
-	// set the Rising Edge detect bit for GPIO line 10 (on the device)
-	ldr		r0, =0x2020004C
-	ldr		r1, [r0]
-	orr		r1, #0x400				// set bit 10
+	// clear bit 1 in the event detect register
+	ldr		r0, =0x20003000			// System Timer Control and Status
+	mov		r1, #0x2			// bit 1
 	str		r1, [r0]
-***CHANGED
+
+//***CHANGED
 	// enable GPIO IRQ lines on Interrupt Controller
 	ldr		r0, =0x2000B210			// Enable IRQs 1
-	mov		r1, #0x1				// bit 1 set (IRQs 1 WHICH IS SYSTEM TIMER COMPARE REGISTER 1)
+	mov		r1, #0x2			// bit 1 set (IRQs 1 WHICH IS SYSTEM TIMER COMPARE REGISTER 1)
 	str		r1, [r0]
-***ADDED
-	// set the timer
+//***ADDED
+beforeTimer:	// set the timer
 	ldr		r0, =0x20003004			// offset for CLO
 	ldr		r1, [r0]				// get the clock time?
-	ldr		r2, =0x‭1C9C380‬			// 30 seconds
-	add		r1, r2					// time + 30 seconds
-	str		r1, [r0]				// put the time back into CLO
-
+	ldr		r2, =20000000			// 10 seconds
+	add		r1, r2					// time + 10 seconds
+	ldr		r0, =0x20003010			// offset for C1
+	str		r1, [r0]				// put the time into C1
+breaksetTimer:
 	// Enable IRQ
 	mrs		r0, cpsr
 	bic		r0, #0x80
 	msr		cpsr_c, r0
 
-ledLoop$:
-	ldr		r1, =SNESDat
-	ldr		r0, [r1]
-	bl		SetLEDLevel
-
-	b		ledLoop$
-    
+    	mov		pc, lr
 hang:
 	b		hang
 
+
+.globl InstallIntTable
 InstallIntTable:
+
 	ldr		r0, =IntTable
 	mov		r1, #0x00000000
 
@@ -77,35 +62,21 @@ InstallIntTable:
 
 irq:
 	push	{r0-r12, lr}
-***CHANGED
-	// test if there is an interrupt pending in IRQ Pending 1
-	ldr		r0, =0x2000B200
-	ldr		r1, [r0]
-	tst		r1, #0x100		// bit 8 
-	beq		irqEnd
-***CHANGED
-	// test that at least one GPIO IRQ line caused the interrupt
-	ldr		r0, =0x2000B204		// IRQ Pending 1 register
-	ldr		r1, [r0]
-	tst		r1, #0x1			// check IRQ 1
-	beq		irqEnd
-***CHANGED
-	// test if System Timer C1 caused the interrupt
+
+
+checkInt:
+	// test if System Timer C1 caused the interrupt in CS
 	ldr		r0, =0x20003000		// System Timer Control and Status
 	ldr		r1, [r0]
-	tst		r1, #0x20			// bit 1
+	tst		r1, #0x2			// bit 1
 	beq		irqEnd
 
 	// CHANGE THIS CODE TO DRAW THE VALUE PACK
-	// invert the LSB of SNESDat
-	ldr		r0, =SNESDat
-	ldr		r1, [r0]
-	eor		r1, #1
-	str		r1, [r0]
-***CHANGED
-	// clear bit 10 in the event detect register
+	bl		drawValuePack
+//***CHANGED
+	// clear bit 1 in the event detect register
 	ldr		r0, =0x20003000		// System Timer Control and Status
-	mov		r1, #0x20			// bit 1
+	mov		r1, #0x2			// bit 1
 	str		r1, [r0]
 	
 irqEnd:
@@ -113,9 +84,6 @@ irqEnd:
 	subs	pc, lr, #4
 
 .section .data
-
-SNESDat:
-	.int	1
 
 IntTable:
 	// Interrupt Vector Table (16 words)

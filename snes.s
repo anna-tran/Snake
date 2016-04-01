@@ -45,8 +45,14 @@ getDirection:
 	mov	r3, r0
 
 	mov	r0, #0		// default return value if no buttons pressed
-	mov	r1, #1		// r1 = 1
 
+	mov	r1, #1		// r1 = 1
+/*
+	lsl	r2, r1, #13	// try start button
+	ands	r2, r3		// if start button
+	movne	r0, #12		// return start
+	bne	endDirec
+*/
 	lsl	r2, r1, #12	// try up arrow
 	ands	r2, r3		// if up arrow
 
@@ -70,6 +76,7 @@ getDirection:
 	mov	r1, #1		// r1 = 1
 	lsl	r2, r1, #9	// try right
 	ands	r2, r3		// if right
+
 
 	movne	r0, #8		// return right
 endDirec:

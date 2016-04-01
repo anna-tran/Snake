@@ -6,6 +6,9 @@
 checkDeath:
 
 	push {r4-r9, lr}
+	ldr	r1, =HeadDest
+	ldr	r0, [r1], #4
+	ldr	r1, [r1]
 	
 	mov	r8, r0		// copy x
 	mov	r9, r1		// copy y
@@ -91,7 +94,9 @@ printApplePos:
 correctApple:
 
 	push	{r4-r9,lr}
-	ldr	r4, =applePosition
+	cmp	r0, #0
+	ldreq	r4, =applePosition
+	ldrne	r4, =VPPosition
 	ldr	r8, [r4], #4
 	ldr	r9, [r4]
 //	ldm	r4, {r8,r9}	// r8 = x
@@ -127,7 +132,7 @@ checkAppleSnake:
 
 	b endAppleCheck
 callRedo:
-	mov	r0, #0
+	mov	r0, #-1
 // 0 if ok
 // -1 if redo
 endAppleCheck:
@@ -139,6 +144,9 @@ getRand:
 	push	{r4-r9,lr}
 	
 	// xorshift x
+	mov	r9, r0		// store r0
+	// if r9 = 0, draw apple
+	// if r9 = 1, draw valuePack
 	
 	mov	r0, #0		// start with x
 
@@ -169,7 +177,10 @@ checkAppleX:
 	blt	randAgain
 	cmp	r8, #928
 	bgt	randAgain
-	ldr	r4, =applePosition	// apple x
+
+	cmp	r9, #0
+	ldreq	r4, =applePosition	// apple x
+	ldrne	r4, =VPPosition	// apple x
 	b	storeAppleXY
 	
 checkAppleY:
@@ -177,13 +188,16 @@ checkAppleY:
 	cmp	r8, #256
 	blt	randAgain
 	cmp	r8, #672
-	ldr	r4, =applePosition	// apple y
-	add	r4, #4
 	bgt	randAgain
 
-storeAppleXY:	
+	cmp	r9, #0
+	ldr	r4, =applePosition	// apple y
+	ldrne	r4, =VPPosition	// apple x
+	add	r4, #4
 
-	str	r8, [r4]	// store new x position for apple
+
+storeAppleXY:	
+	str	r8, [r4]	// store new x position for apple or value pack
 	add	r0, #1		// change to y
 	cmp	r0, #1
 	beq	randAgain	// generate another random value for y
@@ -191,8 +205,9 @@ storeAppleXY:
 	ldr	r4, =rand
 	stm	r4, {r5-r8}
 
+	mov	r0, r9
 	bl	correctApple
-	cmp	r0, #0
+	cmp	r0, #-1
 	beq	randAgain	// if apple in spot of snake or brick,
 				// try again
 
@@ -202,6 +217,8 @@ storeAppleXY:
 
 .globl	incLength
 // subroutine to increase snake length by 1
+// and increase number of apples eaten by 1
+// inc score by 3 every time an apple is eaten
 incLength:
 	push	{r4-r9,lr}
 
@@ -210,8 +227,52 @@ incLength:
 	add	r5, #1
 	str	r5, [r4]
 
+	ldr	r4, =score
+	ldr	r5, [r4]
+	add	r5, #3
+	str	r5, [r4]
+
+	ldr	r4, =appleCount
+	ldr	r5, [r4]
+	add	r5, #1
+	str	r5, [r4]
+
 	pop	{r4-r9,lr}
 	mov	pc,lr
+
+.globl	clearSnakeBody
+// clears the snake body positions
+clearSnakeBody:
+	push	{r4-r9,lr}
+
+	ldr	r4, =origSnake
+	ldr	r5, =snakePosition
+	ldr	r6, =256
+clearBodyLoop:
+	ldr	r7, [r4], #4
+	str	r7, [r5], #4
+	
+	subs	r6, #1
+	bgt	clearBodyLoop
+
+	pop	{r4-r9,lr}
+	mov	pc,lr
+
+bricks:
+	.int 384, 352, 384, 384, 384, 416, 384, 448, 384, 480
+	.int 192, 608, 256, 608, 320, 608, 384, 608, 448, 608, 512, 608, 576, 608
+	.int 640, 352, 672, 352, 704, 352, 736, 352
+	.int 640, 384, 736, 384, 672, 448, 704, 448
+
+
+// if snake destined to go further than the bound it dies
+// x and y positions of snake if it hits the bound
+
+wall:	.int 32
+	.int 960
+	.int 224
+	.int 704
+
 
 .section .data
 
@@ -219,14 +280,4 @@ incLength:
 rand:
 	.int 35290, 103666, 3009, 6123
 
-bricks:
-	.int 384, 352, 384, 384, 384, 416, 384, 448, 384, 480
-	.int 192, 608, 256, 608, 320, 608, 384, 608, 448, 608, 512, 608, 576, 608
-	.int 640, 352, 672, 352, 704, 352, 736, 352
-	.int 640, 384, 736, 384, 672, 448, 704, 448
-// if snake destined to go further than the bound it dies
-// x and y positions of snake if it hits the bound
-wall:	.int 32
-	.int 960
-	.int 224
-	.int 704
+

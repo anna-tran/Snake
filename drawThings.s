@@ -181,6 +181,23 @@ drawHorzWall:
 drawStart:
 	push {r4-r9,lr}
 
+	cmp	r0, #0
+	bne	drawPauseStart
+
+	ldr	r0, =420
+	ldr	r1, =352
+	mov	r2, #7
+	mov	r3, #16
+	bl	drawTile
+
+	ldr	r0, =420
+	ldr	r1, =384
+	mov	r2, #0
+	mov	r3, #16
+	bl	eraseTile
+	b	rDrawStart
+
+drawPauseStart:
 	ldr	r0, =420
 	ldr	r1, =352
 	mov	r2, #7
@@ -193,6 +210,7 @@ drawStart:
 	mov	r3, #16
 	bl	eraseTile
 
+rDrawStart:
 	pop {r4-r9,lr}
 	mov	pc,lr
 
@@ -201,6 +219,23 @@ drawStart:
 drawQuit:
 	push {r4-r9,lr}
 
+	cmp	r0, #0
+	bne	drawPauseQuit
+
+	ldr	r0, =420
+	ldr	r1, =384
+	mov	r2, #7
+	mov	r3, #16
+	bl	drawTile
+
+	ldr	r0, =420
+	ldr	r1, =352
+	mov	r2, #0
+	mov	r3, #16
+	bl	eraseTile
+	b	rDrawQuit
+
+drawPauseQuit:
 	ldr	r0, =420
 	ldr	r1, =384
 	mov	r2, #7
@@ -213,6 +248,7 @@ drawQuit:
 	mov	r3, #16
 	bl	eraseTile
 
+rDrawQuit:
 	pop {r4-r9,lr}
 	mov	pc,lr
 
@@ -369,7 +405,9 @@ updateSnake:
 	ldr	r3, =HeadDir	// save head direction
 	str	r2, [r3]
 
+// check status of snake
 	bl	checkDeath	// check if snake has died
+aDeath:
 	cmp	r0, #-1
 	moveq	r1, r9		// get snake length
 	bleq	clearSnake
@@ -381,16 +419,34 @@ updateSnake:
 	ldr	r0, [r3], #4
 	ldr	r1, [r3]
 
+
 	bl	checkApple
 	cmp	r0, #0		// if apple, then 0
-	bne	drawUsual
+	bne	drawUsual	// if no apple eaten, redraw snake as usual
+				// if apple eaten
+	bl	incLength	// increase snake length, update score and apple count
+	ldr	r0, =appleCount
+	ldr	r0, [r0]	// r0 = appleCount
+	cmp	r0, #5
+	blt	nextApple	// if not yet eaten 20 apples, draw another
+shouldWin:
+	bleq	drawDoor
+	blgt	storeWin	// then we have gotten to the door
+	b	drawUsual
+
+nextApple:
+	mov	r0, #0		// drawing an apple
 	bl	getRand
-adraw:	bl	drawApple
-	bl	incLength
+
+	bl	drawApple	// draw next apple
+	
 drawUsual:
 	ldr	r3, =HeadDest	// load head destination
 	ldr	r0, [r3], #4
 	ldr	r1, [r3]
+
+	ldr	r3, =HeadDir	// load head direction
+	ldr	r2, [r3]
 	
 	mov	r3, #32
 	
@@ -447,7 +503,9 @@ clearSnake:
 
 	push	{r4-r9,lr}
 	// r1 contains length of snake
-	mov	r9, r1		// r9 is length of snake
+	ldr	r4, =snakeLen
+	ldr	r9, [r4]
+//	mov	r9, r1		// r9 is length of snake
 	
 	ldr	r4, =snakePosition
 	mov	r5, #0
@@ -463,6 +521,18 @@ clearLoop:
 
 	subs	r9, #1		// dec length
 	bne	clearLoop
+
+
+	pop	{r4-r9,lr}
+	mov	pc,lr
+
+.globl	storeWin
+storeWin:
+	push	{r4-r9, lr}
+
+	ldr	r4, =endGame
+	mov	r5, #1
+	str	r5, [r4]
 
 	pop	{r4-r9,lr}
 	mov	pc,lr
@@ -508,23 +578,84 @@ clearSLLoop:
 	pop	{r4-r9,lr}
 	mov	pc,lr
 
-/*
-.globl	drawLose
-drawLose:
+
+.globl	drawWLP
+drawWLP:
 	push	{r4-r9,lr}
 
-	bl	drawMenuBck
-	ldr	r0, =272
-	ldr	r1, =204
-	mov	r2, #8
-	ldr	r3, =350
-	bl	drawTile
+	// r0 is a code for the image
+// 1 is win
+// 2 is pause
+// 3 is lose
+// r9 is the address of the image
+	cmp	r0, #1
+	ldreq	r9, =Win
+	cmp	r0, #2
+	ldreq	r9, =Pause
+	cmp	r0, #3
+	ldreq	r9, =Lose
+
+	ldr	r8, =480
+	
+	ldr	r5, =204	// starting y
+
+drawWLPVert:
+	ldr	r4, =272	// reset x
+	mov	r6, #0		// reset x counter
+
+
+drawWLPHorz:
+	mov	r0, r4		// copy x
+	mov	r1, r5		// copy y
+	ldrh	r2, [r9], #2	// get pixel color
+	bl	DrawPixel
+
+	add	r4, #1		// x = x+1
+	add	r6, r6, #1	// inc x counter
+	cmp	r6, r8		// if <480 px across 
+	blt	drawWLPHorz	// loop back
+
+	add	r5, #1		// move to next line of image
+	ldr	r0, =457	// if not at end of image
+	cmp	r5, r0		// loop back
+	blt	drawWLPVert
 
 	pop	{r4-r9,lr}
 
 	mov	pc,lr
-*/
 
+
+.globl	drawValuePack
+drawValuePack:
+	push	{r4-r9,lr}
+	mov	r0, #1		// drawing a value pack
+	bl	getRand
+	ldr	r3, =VPPosition
+	ldr	r0, [r3], #4
+	ldr	r1, [r3]
+	mov	r2, #10		// r2 = value pack
+	mov	r3, #32		// size of tile
+	bl	drawTile
+
+	pop	{r4-r9,lr}
+	mov	pc,lr
+
+.globl	drawDoor
+drawDoor:
+
+	push	{r4-r9,lr}
+	mov	r0, #0
+	bl	getRand
+
+	ldr	r4, =applePosition
+	ldr	r0, [r4], #4
+	ldr	r1, [r4]
+	mov	r2, #6
+	mov	r3, #32
+	bl	drawTile
+	
+	pop	{r4-r9,lr}
+	mov	pc,lr
 
 .globl	drawTile
 // r0 is the x top left corner
@@ -532,7 +663,7 @@ drawLose:
 // r2 int representing tile image to be displayed
 // r3 size of tile
 drawTile:
-	push {r4, r5, r6, r7, r8, r9, r10, lr}
+	push {r4-r9, lr}
 // 0 - Brick
 // 1 - Wall
 // 2 - Snake headR
@@ -542,7 +673,7 @@ drawTile:
 // 5 - Apple
 // 6 - Door
 // 7 - Pointer
-// 8 - Game Lost
+// 10 - Value Pack
 
 	cmp	r2, #0
 	ldreq	r5, =Brick
@@ -565,11 +696,18 @@ drawTile:
 	cmp	r2, #5
 	ldreq	r5, =Apple
 
+	cmp	r2, #6
+	ldreq	r5, =Door
+
 	cmp	r2, #7
 	ldreq	r5, =Duck
 
 //	cmp	r2, #8
 //	ldreq	r5, =Lost
+
+	cmp	r2, #10
+	ldreq	r5, =Cake
+	
 
 
 
@@ -607,7 +745,7 @@ drawTileHorz:
 
 	mov		r0, r6		//return location of the tile
 	mov		r1, r7
-	pop {r4, r5, r6, r7, r8, r9, r10, lr}
+	pop {r4-r9, lr}
 	mov	pc, lr
 		
 
