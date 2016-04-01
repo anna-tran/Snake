@@ -74,6 +74,10 @@ returnDead:
 checkApple:
 	push	{r4-r9,lr}
 
+	ldr	r4, =HeadDest	// load head destination
+	ldr	r0, [r4], #4
+	ldr	r1, [r4]
+
 	ldr	r4, =applePosition
 	ldr	r5, [r4], #4	// get apple x
 	ldr	r6, [r4]	// get apple y
@@ -237,6 +241,8 @@ incLength:
 	add	r5, #1
 	str	r5, [r4]
 
+	bl	printSL
+
 	pop	{r4-r9,lr}
 	mov	pc,lr
 
@@ -258,6 +264,35 @@ clearBodyLoop:
 	pop	{r4-r9,lr}
 	mov	pc,lr
 
+
+// subroutine to check if value pack is next cell
+.globl	checkValuePack
+// return value in r0
+checkValuePack:
+
+	push	{r4-r9,lr}
+	mov	r9, #-1			// default return value if there is no value pack
+	ldr	r4, =HeadDest
+	ldm	r4, {r5,r6}		// r5 = x
+					// r6 = y
+	ldr	r4, =VPPosition
+	ldm	r4, {r7,r8}
+	cmp	r5, r7
+	cmpeq	r6, r8
+	bne	endVP
+isVP:	moveq	r9, #0			// r6 = 0 is there is a value pack
+	moveq	r5, #0
+	stmeq	r4, {r5,r9}		// remove location of value pack
+	ldr	r4, =score
+	ldr	r5, [r4]
+	add	r5, #5
+	str	r5, [r4]		// increase the score by 5
+	bl	printSL
+	mov	r0, r9
+endVP:
+	pop	{r4-r9,lr}
+	mov	pc,lr
+
 bricks:
 	.int 384, 352, 384, 384, 384, 416, 384, 448, 384, 480
 	.int 192, 608, 256, 608, 320, 608, 384, 608, 448, 608, 512, 608, 576, 608
@@ -270,7 +305,7 @@ bricks:
 
 wall:	.int 32
 	.int 960
-	.int 224
+	.int 96
 	.int 704
 
 

@@ -7,6 +7,9 @@ origSnake:
 
 .section .data
 
+.globl	Speed
+Speed:
+	.int 120000
 
 .globl	endGame
 // 0 is continue

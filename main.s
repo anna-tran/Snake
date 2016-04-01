@@ -54,12 +54,6 @@ restartGameIteration:
 	ldr 	r3, =200000		//wait a bit
 	bl 	Wait
 
-	bl	clearSL
-
-	ldr	r0, =score
-	ldr	r0, [r0]
-	ldr	r1, =lives
-	ldr	r1, [r1]
 	bl	printSL
 
 	ldr	r2, =direction
@@ -161,7 +155,10 @@ isWin:	moveq	r0, #1
 	bleq	drawWLP			// draw win message
 	beq	finish			// finish game
 nextTurn:
-	ldr 	r3, =120000//100000		//wait a bit
+	ldr	r0, =Speed
+checkSpeed:
+	ldr	r3, [r0]
+//	ldr 	r3, =120000//100000		//wait a bit
 	bl 	Wait
 
 	b 	stateLoop		// loop back
@@ -298,15 +295,20 @@ resetGame:
 	str	r5, [r4]	
 
 	ldr	r4, =lives		// reset lives
-	mov	r6, #3		
+	mov	r6, #3	
 	str	r6, [r4]
+	mov	r6, #15
 	ldr	r4, =snakeLen		// reset length
 	str	r6, [r4]
 
+	ldr	r4, =Speed		// reset speed
+	ldr	r5, =120000
+	str	r5, [r4]		
+
+	bl	init_map		// reinitiate the map
+
 	
 	bl 	interruptSetUp		// reset value pack
-
-	bl	init_map
 
 	bl	clearSnakeBody
 
@@ -331,7 +333,7 @@ score:	.int	0
 lives:	.int	3
 
 .globl	snakeLen
-snakeLen: .int	3
+snakeLen: .int	15
 // directions based on button number for up down left right
 direction: .int 8
 

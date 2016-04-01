@@ -132,7 +132,7 @@ drawWall:
 	push {r4, r5, lr}
 
 // changing y -> r1
-	ldr	r1, =192
+	ldr	r1, =64
 	mov	r4, r1		// counter for y
 drawVertWall:
 	mov	r0, #0
@@ -156,7 +156,7 @@ drawVertWall:
 	mov	r0, #64
 	mov	r4, r0		// r4 is copy of r0
 drawHorzWall:
-	ldr	r1, =192	// y position
+	ldr	r1, =64	// y position
 	mov	r2, #1		// draw wall
 	mov	r3, #64		// size of image
 	bl	drawTile
@@ -405,20 +405,24 @@ updateSnake:
 	ldr	r3, =HeadDir	// save head direction
 	str	r2, [r3]
 
-// check status of snake
+// check death status of snake
 	bl	checkDeath	// check if snake has died
-aDeath:
+
 	cmp	r0, #-1
 	moveq	r1, r9		// get snake length
 	bleq	clearSnake
 	moveq	r0, #-1		// move -1 back into r0
 	beq	returnUpdate	// if dead, return
 
+// check if Value pack to be eaten
+// value returned in r0
+	bl	checkValuePack
+	cmp	r0, #0		// if value pack eaten
+	ldreq	r0, =Speed
+	ldreq	r1, =60000
+	streq	r1, [r0]	// increase snake speed
 
-	ldr	r3, =HeadDest	// load head destination
-	ldr	r0, [r3], #4
-	ldr	r1, [r3]
-
+// check if apple to be eaten
 
 	bl	checkApple
 	cmp	r0, #0		// if apple, then 0
@@ -429,7 +433,7 @@ aDeath:
 	ldr	r0, [r0]	// r0 = appleCount
 	cmp	r0, #5
 	blt	nextApple	// if not yet eaten 20 apples, draw another
-shouldWin:
+
 	bleq	drawDoor
 	blgt	storeWin	// then we have gotten to the door
 	b	drawUsual
@@ -437,7 +441,6 @@ shouldWin:
 nextApple:
 	mov	r0, #0		// drawing an apple
 	bl	getRand
-
 	bl	drawApple	// draw next apple
 	
 drawUsual:
@@ -555,28 +558,7 @@ drawApple:
 	pop	{r4-r9,lr}
 	mov	pc,lr
 
-.globl	clearSL
-// subroutine to clear the lives text
 
-clearSL:
-	push	{r4-r9,lr}
-	ldr	r4, =320	// starting x coor
-	ldr	r5, =630	// ending x coor
-
-clearSLLoop:
-	mov	r0, r4
-	mov	r1, #70		// y coor
-	ldr	r2, =0xA098	// magenta
-	mov	r3, #32		// size of tile
-	bl	eraseTile
-
-	add	r4, #32
-
-	cmp	r4, r5		// check if end of lives
-	blt	clearSLLoop
-
-	pop	{r4-r9,lr}
-	mov	pc,lr
 
 
 .globl	drawWLP

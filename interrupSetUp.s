@@ -19,7 +19,7 @@ interruptSetUp:
 beforeTimer:	// set the timer
 	ldr		r0, =0x20003004			// offset for CLO
 	ldr		r1, [r0]				// get the clock time?
-	ldr		r2, =20000000			// 10 seconds
+	ldr		r2, =1000000			// 10 seconds
 	add		r1, r2					// time + 10 seconds
 	ldr		r0, =0x20003010			// offset for C1
 	str		r1, [r0]				// put the time into C1

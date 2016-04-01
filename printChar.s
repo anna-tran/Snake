@@ -2,20 +2,17 @@
 .section .text
 
 // subroutine to write to screen
-/*
-r0 = score
-r1 = lives
-*/
+
 .globl printSL
 printSL:
 	push {r4-r9, lr}
 // start at 320
+	bl	clearSL
 
 	px	.req r1
 	py	.req r2
 	count	.req r8
-	mov	r4, r0		// save score
-	mov	r5, r1		// save lives
+
 
 	ldr	r6, =scoreTxt
 	ldr	r7, =lifeTxt
@@ -26,20 +23,22 @@ printSL:
 	mov	count, #7	// init counter
 loopScore:
 	ldrb	r0, [r6], #1	// load one char
-	mov	py, #70		// init y coor
+	mov	py, #32		// init y coor
 	bl	DrawChar	// write char
 	add	px, r3, #8
 	mov	r3, px
 	subs	count, #1	// dec counter
-	bge	loopScore
+	bgt	loopScore
 
 // add 48 to score digits and lives to get ascii
-// cap of at 99 for score
-	mov	r0, r4
+// cap off at 99 for score
+	ldr	r9, =score
+	ldr	r0, [r9]
 	bl	itoa
-	cmp	r4, #1
+	ldr	r0, [r9]
+	cmp	r0, #0
 	movge	count, #1
-	cmp	r4, #10
+	cmp	r0, #10
 	movge	count, #2
 
 	ldr	r6, =intHold
@@ -47,12 +46,11 @@ loopScore:
 	ldr	px, =376	// init x coor
 getScore:
 	ldrb	r0, [r6], #1	// load one char
-	mov	py, #70		// init y coor
+	mov	py, #32		// init y coor
 	bl	DrawChar	// write char
-	add	px, r3, #8
-	mov	r3, px
+	ldr	px, =384
 	subs	count, #1	// dec counter
-	bge	getScore
+	bgt	getScore
 
 
 	ldr	px, =512	// init x coor
@@ -60,7 +58,7 @@ getScore:
 	mov	count, #7	// init counter
 loopLives:
 	ldrb	r0, [r7], #1	// load one char
-	mov	py, #70		// init y coor
+	mov	py, #32		// init y coor
 	bl	DrawChar	// write char
 	add	px, r3, #8
 	mov	r3, px
@@ -69,7 +67,8 @@ loopLives:
 
 // add 48 to score digits and lives to get ascii
 // cap of at 99 for score
-	mov	r0, r5
+	ldr	r0, =lives
+	ldr	r0, [r0]
 	bl	itoa
 
 	ldr	r6, =intHold	// load address for intHold
@@ -77,7 +76,7 @@ loopLives:
 	ldr	px, =568	// init x coor
 getLives:
 	ldrb	r0, [r6]	// load one char
-	mov	py, #70		// init y coor
+	mov	py, #32		// init y coor
 	bl	DrawChar	// write char
 
 
@@ -109,10 +108,7 @@ loop10:
 	strb	r1, [r4], #1
 
 store1:
-	mov	r1, #0		// reset counter
-	cmp	r0, #0		// check if last digit is 0
-	beq	return
-	
+	mov	r1, #0		// reset counter	
 	add	r0, #48		// else convert to ascii and store
 	strb	r0, [r4]
 
@@ -122,6 +118,29 @@ return:
 	mov	pc,lr
 
 
+
+.globl	clearSL
+// subroutine to clear the lives text
+
+clearSL:
+	push	{r4-r9,lr}
+	ldr	r4, =320	// starting x coor
+	ldr	r5, =630	// ending x coor
+
+clearSLLoop:
+	mov	r0, r4
+	mov	r1, #32		// y coor
+	ldr	r2, =0xA098	// magenta
+	mov	r3, #32		// size of tile
+	bl	eraseTile
+
+	add	r4, #32
+
+	cmp	r4, r5		// check if end of lives
+	blt	clearSLLoop
+
+	pop	{r4-r9,lr}
+	mov	pc,lr
 
 // subroutine to print menu
 .globl printMenu
@@ -288,13 +307,9 @@ noPixel$:
 
 //Buffer for reading from screen
 intHold:
-	.ascii "00"
-
+	.ascii "  "
 .align 4
 font:		.incbin	"font.bin"
-
-score:	.int	0
-lives:	.int	3
 
 .align 2
 scoreTxt:
