@@ -1,5 +1,5 @@
 .section .text
-
+// frame buffer methods taken from tutorial
 .globl InitFrameBuffer
 /* Initialize the FrameBuffer using the FrameBufferInit structure
  * Returns:

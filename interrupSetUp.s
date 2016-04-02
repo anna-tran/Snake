@@ -10,20 +10,21 @@ interruptSetUp:
 	mov		r1, #0x2			// bit 1
 	str		r1, [r0]
 
-//***CHANGED
+
 	// enable GPIO IRQ lines on Interrupt Controller
 	ldr		r0, =0x2000B210			// Enable IRQs 1
 	mov		r1, #0x2			// bit 1 set (IRQs 1 WHICH IS SYSTEM TIMER COMPARE REGISTER 1)
 	str		r1, [r0]
-//***ADDED
-beforeTimer:	// set the timer
+
+	// set the timer
 	ldr		r0, =0x20003004			// offset for CLO
-	ldr		r1, [r0]				// get the clock time?
+	ldr		r1, [r0]				// get the clock time
 	ldr		r2, =30000000			// 30 seconds
 	add		r1, r2					// time + 30 seconds
 	ldr		r0, =0x20003010			// offset for C1
 	str		r1, [r0]				// put the time into C1
-breaksetTimer:
+
+	
 	// Enable IRQ
 	mrs		r0, cpsr
 	bic		r0, #0x80
@@ -71,40 +72,12 @@ checkInt:
 	tst		r1, #0x2			// bit 1
 	beq		irqEnd
 
-	// CHANGE THIS CODE TO DRAW THE VALUE PACK
-	// PRINT RIGHT AWAY IF NO PAUSE
-	// else if there is pause, keep looping until 
-/*
-	ldr	r2, =endGame
-	ldr	r0, [r2]
-	cmp	r0, #5		// if not pause, draw value pack now
-	bne	drawNow
-
-// wait until no longer on pause
-whilePause:
-	ldr	r0, [r2]	// keep checking endGame for pause
-	cmp	r0, #5
-	beq	whilePause	// wait until no longer on pause
-
-	ldr	r0, =0x20003004	//CLO
-	ldr	r1, [r0]	//read CLO
-	ldr	r2, =TimeElapsed
-	ldr	r2, [r2]	// r2 is time elapsed since the beginning
-	ldr	r3, =1000000	// total time to wait
-	sub	r2, r3, r2	// total - elapsed time
-	add	r1, r2		// get the remaining time
-intWait:
-	ldr	r2, [r0]	//read CLO
-	cmp	r1, r2
-	blt	intWait		// wait until remaining time is over
-
-
-*/
-drawNow:
+	// draw value pack
+	
 	mov	r0, #1		// drawing a value pack
 	bl	getRand
 	bl	drawValuePack
-//***CHANGED
+
 	// clear bit 1 in the event detect register
 	ldr		r0, =0x20003000		// System Timer Control and Status
 	mov		r1, #0x2			// bit 1

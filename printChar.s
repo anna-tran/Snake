@@ -7,9 +7,9 @@
 printSL:
 	push {r4-r9, lr}
 // start at 320
-	bl	clearSL
+	bl	clearSL		// clear the score and lives frist
 
-	px	.req r1
+	px	.req r1		// rename r1, r2 and r8
 	py	.req r2
 	count	.req r8
 
@@ -19,38 +19,37 @@ printSL:
 
 	
 	ldr	px, =320	// init x coor
-	mov	r3, px
+	mov	r3, px		// copy x to r3
 	mov	count, #7	// init counter
 loopScore:
 	ldrb	r0, [r6], #1	// load one char
 	mov	py, #32		// init y coor
 	bl	DrawChar	// write char
-	add	px, r3, #8
-	mov	r3, px
+	add	px, r3, #8	// move to next pixel location
+	mov	r3, px		// update r3
 	subs	count, #1	// dec counter
-	bgt	loopScore
+	bgt	loopScore	// loop back if counter > 0
 
 // add 48 to score digits and lives to get ascii
-// cap off at 99 for score
-	ldr	r9, =score
+	ldr	r9, =score	// load score
 	ldr	r0, [r9]
-	bl	itoa
-	ldr	r0, [r9]
-	cmp	r0, #0
+	bl	itoa		// convert int to ascii
+	ldr	r0, [r9]	// check if score is 1 or 2 digits long
+	cmp	r0, #0		// if one digit, count = 1
 	movge	count, #1
-	cmp	r0, #10
+	cmp	r0, #10		// if two digits count = 2
 	movge	count, #2
 
-	ldr	r6, =intHold
+	ldr	r6, =intHold	// holder for int in ascii form
 	
 	ldr	px, =376	// init x coor
 getScore:
 	ldrb	r0, [r6], #1	// load one char
 	mov	py, #32		// init y coor
 	bl	DrawChar	// write char
-	ldr	px, =384
+	ldr	px, =384	// move to next x
 	subs	count, #1	// dec counter
-	bgt	getScore
+	bgt	getScore	// if two digits, print second digit
 
 
 	ldr	px, =512	// init x coor
@@ -60,16 +59,15 @@ loopLives:
 	ldrb	r0, [r7], #1	// load one char
 	mov	py, #32		// init y coor
 	bl	DrawChar	// write char
-	add	px, r3, #8
-	mov	r3, px
+	add	px, r3, #8	// move to next pixel location
+	mov	r3, px		// update r3
 	subs	count, #1	// dec counter
-	bgt	loopLives
+	bgt	loopLives	// loop back if counter > 0
 
 // add 48 to score digits and lives to get ascii
-// cap of at 99 for score
 	ldr	r0, =lives
 	ldr	r0, [r0]
-	bl	itoa
+	bl	itoa		// convert int lives into ascii
 
 	ldr	r6, =intHold	// load address for intHold
 	
@@ -80,7 +78,7 @@ getLives:
 	bl	DrawChar	// write char
 
 
-	.unreq	px
+	.unreq	px		// take off label from r1, r2, r8
 	.unreq	py
 	.unreq	count
 
@@ -105,12 +103,12 @@ loop10:
 
 	// convert counter to ascii
 	add	r1, #48
-	strb	r1, [r4], #1
+	strb	r1, [r4], #1	// store into intHold
 
 store1:
 	mov	r1, #0		// reset counter	
 	add	r0, #48		// else convert to ascii and store
-	strb	r0, [r4]
+	strb	r0, [r4]	// store into intHold
 
 
 return:
@@ -131,10 +129,10 @@ clearSLLoop:
 	mov	r0, r4
 	mov	r1, #32		// y coor
 	ldr	r2, =0xA098	// magenta
-	mov	r3, #32		// size of tile
-	bl	eraseTile
+	mov	r3, #32		// size of cell
+	bl	eraseTile	// erase cell
 
-	add	r4, #32
+	add	r4, #32		// move to next right cell
 
 	cmp	r4, r5		// check if end of lives
 	blt	clearSLLoop
@@ -154,16 +152,14 @@ printMenu:
 	
 pClassTitle:
 	ldrb	r0, [r3], #1	// r0 = char	
-	mov	r1, r4
-	mov	r2, r5
-	bl	DrawChar
+	mov	r1, r4		// copy x into r1
+	mov	r2, r5		// copy y into r2
+	bl	DrawChar	// draw character
 	add	r4, #8		// next char space
 	mov	r1, r4		// update x
 	mov	r2, r5		// repaste y
 	subs	r6, #1		// if counter != 0
 	bne	pClassTitle	// loop again
-
-
 
 	ldr	r3, =gameTitle	// r3 = address
 	ldr	r4, =448	// x init
@@ -172,16 +168,14 @@ pClassTitle:
 	
 pGameTitle:
 	ldrb	r0, [r3], #1	// r0 = char	
-	mov	r1, r4
-	mov	r2, r5
-	bl	DrawChar
+	mov	r1, r4		// copy x into r1
+	mov	r2, r5		// copy y into r2
+	bl	DrawChar	// draw character
 	add	r4, #8		// next char space
 	mov	r1, r4		// update x
 	mov	r2, r5		// repaste y
 	subs	r6, #1		// if counter != 0
 	bne	pGameTitle	// loop again
-
-
 
 	ldr	r3, =creators	// r3 = address
 	ldr	r4, =448	// x init
@@ -190,9 +184,9 @@ pGameTitle:
 	
 pCreators:
 	ldrb	r0, [r3], #1	// r0 = char	
-	mov	r1, r4
-	mov	r2, r5
-	bl	DrawChar
+	mov	r1, r4		// copy x into r1
+	mov	r2, r5		// copy y into r2
+	bl	DrawChar	// draw char
 	add	r4, #8		// next char space
 	mov	r1, r4		// update x
 	mov	r2, r5		// repaste y
@@ -208,9 +202,9 @@ pCreators:
 	
 pStart:
 	ldrb	r0, [r3], #1	// r0 = char	
-	mov	r1, r4
-	mov	r2, r5
-	bl	DrawChar
+	mov	r1, r4		// copy x into r1
+	mov	r2, r5		// copy y into r2
+	bl	DrawChar	// draw char
 	add	r4, #8		// next char space
 	mov	r1, r4		// update x
 	mov	r2, r5		// repaste y
@@ -226,16 +220,14 @@ pStart:
 	
 pQuit:
 	ldrb	r0, [r3], #1	// r0 = char	
-	mov	r1, r4
-	mov	r2, r5
-	bl	DrawChar
+	mov	r1, r4		// copy x into r1
+	mov	r2, r5		// copy y into r2
+	bl	DrawChar	// draw char
 	add	r4, #8		// next char space
 	mov	r1, r4		// update x
 	mov	r2, r5		// repaste y
 	subs	r6, #1		// if counter != 0
 	bne	pQuit		// loop again
-
-
 
 	pop {r4-r9,lr}
 	mov	pc,lr
@@ -244,7 +236,7 @@ pQuit:
 
 
 
-/* Draw the character in r0
+/* subroutine to draw the character in r0
 r0 = character
 r1 = x position
 r2 = y position
@@ -253,6 +245,7 @@ r2 = y position
 DrawChar:
 	push	{r4-r9, lr}
 
+	// label registers
 	chAdr	.req	r4
 	px		.req	r5
 	py		.req	r6
@@ -317,6 +310,7 @@ scoreTxt:
 lifeTxt:
 .ascii "Lives: "
 
+// string to print out on main menu screen
 classTitle: .ascii "CPSC 359"
 gameTitle: .ascii "Snake"
 creators: .ascii "Ryan Holoweckyj and Anna Tran"

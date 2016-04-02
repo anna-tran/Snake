@@ -1,6 +1,8 @@
+// subroutine to select from menu
 .globl selectMenu
 // r0 = 0 select from Menu
 // r0 = 1, select from pause Menu
+// r0 is return value
 selectMenu:
 
 	push	{r4-r9,lr}	// push register values on stack
@@ -30,8 +32,8 @@ selectMenu:
 	movne	r0, #7		// return A
 	bne	endSelect
 
-	cmp	r9, #0
-	beq	endSelect
+	cmp	r9, #0		// if selecting from main menu, all options already considered
+	beq	endSelect	// if selecting from pause menu, check start button too
 	
 	lsl	r2, r1, #13	// try start button
 	ands	r2, r3		// if start button
@@ -39,12 +41,12 @@ selectMenu:
 
 
 endSelect:
-	// r0 is our return value
 	pop	{r4-r9,lr}
 	mov	pc,lr
 
+// subroutine to get new direction for snake
 .globl	getDirection
-
+// r0 is our return value
 getDirection:
 	
 	push	{r4-r9,lr}	// push register values on stack
@@ -84,7 +86,7 @@ getDirection:
 	ands	r2, r3		// if right
 	movne	r0, #8		// return right
 endDirec:
-	// r0 is our return value
+	
 	pop	{r4-r9,lr}
 	mov	pc,lr
 	
@@ -233,11 +235,3 @@ pulseLoop:
 
 	bx	lr		// return to calliing code
 	
-
-
-.section .data  
-
-
-
-
-

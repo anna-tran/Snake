@@ -1,19 +1,22 @@
 .section .text
+// array of 0s to clear snake position
 .globl origSnake
 origSnake:
 	.rept	256
 	.int 0
 	.endr
+	
+.globl pausedScreen
+pausedScreen:
+	.rept	480
+	.int 0
+	.endr
 
 .section .data
-
+// value of snake speed
 .globl	Speed
 Speed:
 	.int 120000
-
-.globl	TimeElapsed
-TimeElapsed:
-	.int 0	
 
 .globl	endGame
 // 0 is continue
@@ -25,26 +28,30 @@ TimeElapsed:
 endGame:
 	.int 0
 
+// number of apples eaten
 .globl	appleCount
 appleCount:
 	.int 0
 
+// position of apple
 .globl	applePosition
 applePosition:
 	.int 640
 	.int 608
 
+// position of value pack
 .globl	VPPosition
 VPPosition:
 	.int 0
 	.int 0
 
-
+// head destination
 .globl HeadDest
 HeadDest:
 	.int 0
 	.int 0
 
+// head direction
 .globl HeadDir
 HeadDir:
 	.int 0
@@ -55,6 +62,7 @@ snakePosition:
 	.int 0
 	.endr
 
+// images for game
 .globl Pause
 Pause:
 .ascii "\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0"
