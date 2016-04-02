@@ -13,8 +13,7 @@ Speed:
 
 .globl	TimeElapsed
 TimeElapsed:
-	.int 0	// start
-	.int 0	// end
+	.int 0	
 
 .globl	endGame
 // 0 is continue

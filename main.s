@@ -105,7 +105,21 @@ stateLoop:
 
 	cmp	r0, #12			// check if start button, r0 is return value
 	bne	continueGameLoop	// if not start button, check if anything was pressed
-	bleq	pauseMenu
+	
+
+	ldr	r4, =0x20003004	//CLO
+	ldr	r5, [r4]	//read CLO
+	ldr	r4, =TimeElapsed	
+	ldr	r6, [r4]	// read start time
+	sub	r5, r6		// find time elapsed; present - start
+	str	r5, [r4]	// store time elapsed into TimeElapsed
+
+	ldr	r2, =endGame
+	mov	r3, #5		// endGame now on pause
+	str	r3, [r2]
+	bl	pauseMenu
+
+
 // 0 - restart
 // 1 - quit
 // 2 - resume
@@ -323,6 +337,11 @@ endMenuSelect:
 
 resetGame:
 	push	{r4-r9,lr}
+
+	ldr	r4, =0x20003004	//CLO
+	ldr	r5, [r4]	//read CLO
+	ldr	r4, =TimeElapsed	// store start time into TimeElapsed
+	str	r5, [r4]
 	
 	ldr	r4, =score		// reset score
 	mov	r5, #0
