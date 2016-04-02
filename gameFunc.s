@@ -189,7 +189,7 @@ checkAppleX:
 	
 checkAppleY:
 	
-	cmp	r8, #256
+	cmp	r8, #128
 	blt	randAgain
 	cmp	r8, #672
 	bgt	randAgain

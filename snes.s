@@ -1,7 +1,10 @@
 .globl selectMenu
+// r0 = 0 select from Menu
+// r0 = 1, select from pause Menu
 selectMenu:
 
 	push	{r4-r9,lr}	// push register values on stack
+	mov	r9, r0		// save value of r0
 	bl	Read_SNES	// read from SNES, r0 contains buttons stored
 	ldr	r4, =0xFFFFFFFF
 	eor	r0, r4
@@ -12,22 +15,28 @@ selectMenu:
 
 	lsl	r2, r1, #12	// try up arrow
 	ands	r2, r3		// if up arrow
-
 	movne	r0, #11		// return up
 	bne	endSelect
 	
 	mov	r1, #1		// r1 = 1
 	lsl	r2, r1, #11	// try down arrow
 	ands	r2, r3		// if down arrow
-
 	movne	r0, #10		// return down
 	bne	endSelect
 
 	mov	r1, #1		// r1 = 1
 	lsl	r2, r1, #8	// try A
 	ands	r2, r3		// if A
-
 	movne	r0, #7		// return A
+	bne	endSelect
+
+	cmp	r9, #0
+	beq	endSelect
+	
+	lsl	r2, r1, #13	// try start button
+	ands	r2, r3		// if start button
+	movne	r0, #12		// return start
+
 
 endSelect:
 	// r0 is our return value
@@ -55,29 +64,24 @@ getDirection:
 
 	lsl	r2, r1, #12	// try up arrow
 	ands	r2, r3		// if up arrow
-
 	movne	r0, #11		// return up
 	bne	endDirec
 	
 	mov	r1, #1		// r1 = 1
 	lsl	r2, r1, #11	// try down arrow
 	ands	r2, r3		// if down arrow
-
 	movne	r0, #10		// return down
 	bne	endDirec
 
 	mov	r1, #1		// r1 = 1
 	lsl	r2, r1, #10	// try left
 	ands	r2, r3		// if left
-
 	movne	r0, #9		// return left
 	bne	endDirec
 	
 	mov	r1, #1		// r1 = 1
 	lsl	r2, r1, #9	// try right
 	ands	r2, r3		// if right
-
-
 	movne	r0, #8		// return right
 endDirec:
 	// r0 is our return value
@@ -163,6 +167,9 @@ Read_Data:
 	movne	r0, #1		//else, return 1
 
 	bx	lr		// return to calling code
+
+
+
 
 //subroutine for waiting
 .globl Wait

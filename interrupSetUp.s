@@ -19,8 +19,8 @@ interruptSetUp:
 beforeTimer:	// set the timer
 	ldr		r0, =0x20003004			// offset for CLO
 	ldr		r1, [r0]				// get the clock time?
-	ldr		r2, =1000000			// 10 seconds
-	add		r1, r2					// time + 10 seconds
+	ldr		r2, =25000000			// 25 seconds
+	add		r1, r2					// time + 25 seconds
 	ldr		r0, =0x20003010			// offset for C1
 	str		r1, [r0]				// put the time into C1
 breaksetTimer:
@@ -72,7 +72,11 @@ checkInt:
 	beq		irqEnd
 
 	// CHANGE THIS CODE TO DRAW THE VALUE PACK
-	bl		drawValuePack
+	// PRINT RIGHT AWAY IF NO PAUSE
+	
+	mov	r0, #1		// drawing a value pack
+	bl	getRand
+	bl	drawValuePack
 //***CHANGED
 	// clear bit 1 in the event detect register
 	ldr		r0, =0x20003000		// System Timer Control and Status

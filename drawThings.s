@@ -199,13 +199,13 @@ drawStart:
 
 drawPauseStart:
 	ldr	r0, =420
-	ldr	r1, =352
+	ldr	r1, =330
 	mov	r2, #7
 	mov	r3, #16
 	bl	drawTile
 
 	ldr	r0, =420
-	ldr	r1, =384
+	ldr	r1, =388
 	mov	r2, #0
 	mov	r3, #16
 	bl	eraseTile
@@ -237,13 +237,13 @@ drawQuit:
 
 drawPauseQuit:
 	ldr	r0, =420
-	ldr	r1, =384
+	ldr	r1, =388
 	mov	r2, #7
 	mov	r3, #16
 	bl	drawTile
 
 	ldr	r0, =420
-	ldr	r1, =352
+	ldr	r1, =330
 	mov	r2, #0
 	mov	r3, #16
 	bl	eraseTile
@@ -305,7 +305,7 @@ drawSnake:
 	mov	r9, r0		// r9 = length of snake
 	mov	r8, r1		// r8 = direction of snake
 	
-	ldr	r4, =160	//x of tail
+	ldr	r4, =64		//x of tail
 	ldr	r5, =288	//y of tail
 
 	mov	r0, r4		// set x
@@ -430,12 +430,21 @@ updateSnake:
 				// if apple eaten
 	bl	incLength	// increase snake length, update score and apple count
 	ldr	r0, =appleCount
-	ldr	r0, [r0]	// r0 = appleCount
-	cmp	r0, #5
-	blt	nextApple	// if not yet eaten 20 apples, draw another
+	ldr	r1, [r0]	// r0 = appleCount
 
-	bleq	drawDoor
-	blgt	storeWin	// then we have gotten to the door
+	cmp	r1, #5
+	blt	nextApple	// if not yet eaten 20 apples, draw another
+	beq	nextDoor	// if 20 apples eaten, draw a door
+	bgt	nextWin		// if gone through door, win game
+
+nextDoor:
+	mov	r0, #0
+	bl	getRand
+	bl	drawDoor
+	b	drawUsual
+
+nextWin:
+	bl	storeWin
 	b	drawUsual
 
 nextApple:
@@ -610,15 +619,17 @@ drawWLPHorz:
 .globl	drawValuePack
 drawValuePack:
 	push	{r4-r9,lr}
-	mov	r0, #1		// drawing a value pack
-	bl	getRand
+	
+	
 	ldr	r3, =VPPosition
 	ldr	r0, [r3], #4
 	ldr	r1, [r3]
+	cmp	r0, #0		// if value pack already eaten,
+	beq	endDrawVP	// don't draw again
 	mov	r2, #10		// r2 = value pack
 	mov	r3, #32		// size of tile
 	bl	drawTile
-
+endDrawVP:
 	pop	{r4-r9,lr}
 	mov	pc,lr
 
@@ -626,9 +637,7 @@ drawValuePack:
 drawDoor:
 
 	push	{r4-r9,lr}
-	mov	r0, #0
-	bl	getRand
-
+	
 	ldr	r4, =applePosition
 	ldr	r0, [r4], #4
 	ldr	r1, [r4]
@@ -684,8 +693,6 @@ drawTile:
 	cmp	r2, #7
 	ldreq	r5, =Duck
 
-//	cmp	r2, #8
-//	ldreq	r5, =Lost
 
 	cmp	r2, #10
 	ldreq	r5, =Cake

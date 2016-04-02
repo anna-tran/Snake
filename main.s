@@ -25,8 +25,10 @@ main:
 	cmp	r1, #2
 	beq	end
 
-	bl 	interruptSetUp
+	
 gameStart:
+	bl 	interruptSetUp		// reset value pack
+
 	bl	gameLoop
 
 	ldr	r0, =endGame
@@ -34,7 +36,19 @@ gameStart:
 	mov	r2, #0
 	str	r2, [r0]
 	cmp	r1, #2
-	beq	main
+	beq	main			// always go back to main menu
+readButtons:
+
+	ldr	r3, =0x249F0
+	bl	Wait
+	bl	Read_SNES	// read from SNES, r0 contains buttons stored
+	ldr	r1, =0xFFFFFFFF
+	eor	r0, r1
+	
+	ldr	r1, =0xFFF0
+	ands	r1, r0
+	beq	readButtons
+	b	main
 
 
 	b	haltLoop$
@@ -51,9 +65,9 @@ gameLoop:
 
 restartGameIteration:
 
-	ldr 	r3, =200000		//wait a bit
+	ldr 	r3, =200000		// wait a bit
 	bl 	Wait
-
+	
 	bl	printSL
 
 	ldr	r2, =direction
@@ -97,11 +111,13 @@ stateLoop:
 // 2 - resume
 isPause:
 	cmp	r1, #0			
-	bleq	resetGame
+	bleq	resetGame		// if game restart
 	
 	ldreq	r2, =endGame
 	moveq	r3, #0
 	streq	r3, [r2]
+	bleq 	interruptSetUp		// reset value pack
+
 	beq	restartGameIteration
 shouldQuit:
 	cmp	r1, #1
@@ -109,8 +125,16 @@ shouldQuit:
 	moveq	r3, #2
 	streq	r3, [r2]		// store quit value in endGame
 	beq	finish			// if r1 = 2, resume game as normal.
-	mov	r0, #0
+	
 
+	cmp	r1, #2			// if resume
+	bleq	init_map
+	bleq	printSL
+	bleq	drawApple
+	bleq	drawValuePack
+	beq	toUpdate
+	
+	mov	r0, #0
 
 continueGameLoop:	
 	cmp	r0, #0			// make sure somthing was pressed
@@ -121,7 +145,7 @@ notOposite:
 	ldr	r1, =snakeLen		// get length
 	ldr	r0, [r1]
 
-	
+toUpdate:	
 	ldr	r2, =direction		// get direction
 	ldr	r1, [r2]
 	bl	updateSnake		// update snakes position
@@ -196,11 +220,13 @@ init_menu:
 	push 	{lr}
 	bl	drawMenuBck
 	bl	printMenu
+	mov	r0, #0
 	bl	drawStart
 	pop 	{lr}
 	mov 	pc,lr
 
 // subroutine to answer the menu pausing
+// return value in r1
 pauseMenu:
 	push	{r4-r9,lr}
 	mov	r0, #2		// draw pause menu
@@ -210,13 +236,15 @@ pauseMenu:
 	bl	drawStart
 	mov	r5, #0
 
+	ldr 	r3, =100000		// wait a bit
+	bl 	Wait
+	
+
 selectFromPause:
+	mov	r0, #1
 	bl	selectMenu	// see if there's any buttons pressed
 				// r0 contains return value
 	mov	r4, r0		// copy r0 into r4
-	cmp	r4, #0		// nothing pressed
-	beq	selectFromPause
-
 
 	cmp	r4, #11		// if up
 	moveq	r0, #1
@@ -232,10 +260,15 @@ selectFromPause:
 	beq	selectFromPause
 
 	cmp	r4, #7		// if A
-	mov	r1, r5
+	moveq	r1, r5
+	beq	breakForP
 
 	cmp	r4, #12		// if start button pressed
 	moveq	r1, #2
+	beq	breakForP
+
+	b	selectFromPause	// if none of start, up, down or up pressed
+				// select from menu again
 
 // 0 - restart
 // 1 - quit
@@ -253,6 +286,7 @@ mSelect:
 	bl	init_GPIO
 	mov	r5, #0
 mSelect2:
+	mov	r0, #0
 	bl	selectMenu	// see if there's any buttons pressed
 				// r0 contains return value
 	mov	r4, r0		// copy r0 into r4
@@ -274,13 +308,15 @@ mSelect2:
 	beq	mSelect2
 
 	cmp	r4, #7		// if A
+	bne	mSelect2	// if none of up, down or A, select from Menu again
 	cmpeq	r5, #0
 	bleq	resetGame	// start a new game
 	ldr	r0, =endGame	// quit game value
-	moveq	r1, #4
-	movne	r1, #2
+	moveq	r1, #4		// start game = 4
+	movne	r1, #2		// end game = 4
 	str	r1, [r0]
 	
+endMenuSelect:	
 	pop {r4-r5,lr}
 	mov	pc,lr
 
@@ -295,9 +331,9 @@ resetGame:
 	str	r5, [r4]	
 
 	ldr	r4, =lives		// reset lives
-	mov	r6, #3	
+	mov	r6, #5
 	str	r6, [r4]
-	mov	r6, #15
+	mov	r6, #3
 	ldr	r4, =snakeLen		// reset length
 	str	r6, [r4]
 
@@ -306,9 +342,6 @@ resetGame:
 	str	r5, [r4]		
 
 	bl	init_map		// reinitiate the map
-
-	
-	bl 	interruptSetUp		// reset value pack
 
 	bl	clearSnakeBody
 
@@ -330,10 +363,10 @@ FrameBufferPointer:
 .globl score
 score:	.int	0
 .globl lives
-lives:	.int	3
+lives:	.int	5
 
 .globl	snakeLen
-snakeLen: .int	15
+snakeLen: .int	3
 // directions based on button number for up down left right
 direction: .int 8
 
